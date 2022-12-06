@@ -2,10 +2,9 @@
 
 set -euo pipefail
 
-function construct_gcs_object() {
+function construct_release_object() {
 	local install_version="${1}"
 	local os_name="${2}"
-	local os_architecture="${3}"
 
-	echo "google-cloud-sdk-${install_version}-${os_name}-${os_architecture}.tar.gz"
+	echo "oci-cli-${install_version}-${os_name}-Offline.zip"
 }

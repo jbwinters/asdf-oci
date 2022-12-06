@@ -8,29 +8,26 @@ plugin_dir="$(dirname "$(dirname "$current_script_path")")"
 # shellcheck source=../lib/utils.bash
 source "${plugin_dir}/lib/utils.bash"
 
-gcs_bucket_name="cloud-sdk-release"
-gcs_object_prefix="google-cloud-sdk"
-gcs_object_fields="kind,nextPageToken,items(name)"
-
 function fetch() {
-	curl --silent GET "https://storage.googleapis.com/storage/v1/b/${gcs_bucket_name}/o?pageToken=${1}&prefix=${gcs_object_prefix}&fields=${gcs_object_fields}"
+	#curl --silent GET "https://storage.googleapis.com/storage/v1/b/${gcs_bucket_name}/o?pageToken=${1}&prefix=${gcs_object_prefix}&fields=${gcs_object_fields}"
+	local url="https://api.github.com/repos/oracle/oci-cli/releases?page=1"
+	#local url="https://api.github.com/repos/oracle/oci-cli/releases?page=13"${1}"
+	curl --silent GET "${url}"
 }
 
 function list_all() {
 	local more=true
-	local nextPageToken=""
+	local nextPage=1
 	local list=""
 	while "${more}"; do
-		res=$(fetch "${nextPageToken}")
-		if [[ "${res}" =~ nextPageToken\"\:\ \"([a-zA-Z0-9=]+)\" ]]; then
-			nextPageToken="${BASH_REMATCH[1]}"
-		else
+		res=$(fetch "${nextPage}")
+		#echo $res # TODO handle fetch errors
+		if [[ "$(echo $res | jq)" == 0 ]]; then
 			more=false
 		fi
-		additions=$(echo "${res}" | grep -Eo "name.*google-cloud-sdk-[0-9]+\.[0-9]+\.[0-9]+-(linux)-x86_64" | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+")
-		if [[ -n "${additions}" ]]; then
-			list="${list}\n${additions}"
-		fi
+		more=false
+		list=$(echo "${res}" | jq '. | map(.name) | join("\n")')
+		((nextPage++))
 	done
 	echo -e "${list}"
 }

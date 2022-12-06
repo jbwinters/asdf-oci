@@ -11,20 +11,20 @@ source "${plugin_dir}/lib/helpers.bash"
 source "${plugin_dir}/lib/utils.bash"
 
 download() {
-	local gcs_bucket_name="cloud-sdk-release"
-	local gcs_object
+	local release_object
 	local status_code
-	gcs_object="$(construct_gcs_object "${ASDF_INSTALL_VERSION}" "$(get_os_name)" "$(get_os_architecture)")"
+	release_object="$(construct_release_object "${ASDF_INSTALL_VERSION}" "$(get_os_name)")"
 
-	log_info "⏬  downloading ${gcs_object}"
+	log_info "⏬  downloading ${release_object}"
 	status_code=$(curl -X GET \
 		--write-out "%{http_code}" \
 		--progress-bar \
-		-Lo "${ASDF_DOWNLOAD_PATH}/${gcs_object}" \
-		"https://storage.googleapis.com/storage/v1/b/${gcs_bucket_name}/o/${gcs_object}?alt=media")
+		-Lo "${ASDF_DOWNLOAD_PATH}/${release_object}" \
+		"https://github.com/oracle/oci-cli/releases/download/v${ASDF_INSTALL_VERSION}/${release_object}")
+		#"https://storage.googleapis.com/storage/v1/b/${gcs_bucket_name}/o/${gcs_object}?alt=media")
 
 	if [[ ${status_code} -eq 404 ]]; then
-		log_failure_and_exit "gcloud not found for version ${ASDF_INSTALL_VERSION}. Full version required, not just major version numbers."
+		log_failure_and_exit "oci not found for version ${ASDF_INSTALL_VERSION}. Full version required, not just major version numbers."
 	fi
 	log_success "downloaded!"
 }

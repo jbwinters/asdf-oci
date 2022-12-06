@@ -25,8 +25,8 @@ function log_warning() {
 }
 # END Logging
 
-function default_cloud_sdk_config() {
-	printf "%s\\n" "${CLOUDSDK_CONFIG:-"$HOME/.config/gcloud"}"
+function default_oci_sdk_config() {
+	printf "%s\\n" "${OCI_CLI_CONFIG_FILE:-"$HOME/.oci/config"}"
 }
 
 function check_dependencies() {
@@ -78,17 +78,7 @@ function get_os_architecture() {
 
 function get_os_name() {
 	local os_name
-	case $(uname -s) in
-	Linux*)
-		os_name="linux"
-		;;
-	Darwin*)
-		os_name="darwin"
-		;;
-	*)
-		log_failure_and_exit "Script only supports macOS and Ubuntu"
-		;;
-	esac
+	os_name=$(lsb_release -is)-$(lsb_release -rs)
 	echo "${os_name}"
 }
 
