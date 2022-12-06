@@ -10,7 +10,7 @@ source "${plugin_dir}/lib/utils.bash"
 
 function fetch() {
 	#curl --silent GET "https://storage.googleapis.com/storage/v1/b/${gcs_bucket_name}/o?pageToken=${1}&prefix=${gcs_object_prefix}&fields=${gcs_object_fields}"
-	local url="https://api.github.com/repos/oracle/oci-cli/releases?page=1"
+	local url="https://api.github.com/repos/oracle/oci-cli/releases?page=${1}"
 	#local url="https://api.github.com/repos/oracle/oci-cli/releases?page=13"${1}"
 	curl --silent GET "${url}"
 }
@@ -26,7 +26,7 @@ function list_all() {
 			more=false
 		fi
 		more=false
-		list=$(echo "${res}" | jq '. | map(.name) | join("\n")')
+		list=$(echo "${res}" | jq -r '. | map(.name) | join("\n")')
 		((nextPage++))
 	done
 	echo -e "${list}"
