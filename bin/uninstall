@@ -10,6 +10,8 @@ source "${plugin_dir}/lib/utils.bash"
 
 # OCI CLI uninstall references - https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/oci-cli-installation.html
 
+: "${ASDF_INSTALL_PATH:?}"
+
 log_info "ℹ️  Your OCI CLI configuration file is left untouched at \"$(default_oci_sdk_config)\""
 
 rm -rf "${ASDF_INSTALL_PATH}"

@@ -3,6 +3,7 @@ basename
 curl
 dirname
 echo
+find
 getconf
 grep
 jq

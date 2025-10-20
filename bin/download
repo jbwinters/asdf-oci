@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+current_script_path="${BASH_SOURCE[0]}"
+plugin_dir="$(dirname "$(dirname "${current_script_path}")")"
+
+# shellcheck source=../lib/utils.bash
+source "${plugin_dir}/lib/utils.bash"
+
+if [ "${ASDF_INSTALL_TYPE}" != "version" ]; then
+	log_failure_and_exit "Please provide the oci version number you wish to download. See \`asdf list all oci\`."
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+	log_failure_and_exit "python3 is required to download oci artifacts."
+fi
+
+if ! python3 -m pip --version >/dev/null 2>&1; then
+	log_failure_and_exit "python3's pip module is required to download oci artifacts."
+fi
+
+tmp_dir="$(mktemp -d)"
+cleanup() {
+	rm -rf "${tmp_dir}"
+}
+trap cleanup EXIT
+
+log_info "📦  Downloading oci ${ASDF_INSTALL_VERSION} artifacts..."
+
+python3 -m pip download \
+	--disable-pip-version-check \
+	--dest "${tmp_dir}" \
+	"oci-cli==${ASDF_INSTALL_VERSION}" >/dev/null
+
+: "${ASDF_DOWNLOAD_PATH:?}"
+rm -rf "${ASDF_DOWNLOAD_PATH}"
+mkdir -p "${ASDF_DOWNLOAD_PATH}"
+
+shopt -s nullglob
+for file in "${tmp_dir}"/*; do
+	mv "${file}" "${ASDF_DOWNLOAD_PATH}/"
+done
+shopt -u nullglob
+
+trap - EXIT
+cleanup
+
+log_success "oci ${ASDF_INSTALL_VERSION} artifacts downloaded to ${ASDF_DOWNLOAD_PATH}"

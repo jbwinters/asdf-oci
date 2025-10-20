@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Implement `bin/download` to prefetch OCI CLI artifacts for asdf's new download/install split.
+
+### Changed
+
+- Install OCI CLI releases into isolated virtual environments via `pip` to align with current asdf plugin guidance.
+- Avoid invoking `asdf` from plugin scripts and harden environment variable usage.
+
 ## [1.2.2](https://github.com/jthegedus/asdf-gcloud/compare/v1.2.1...v1.2.2) (2022-11-14)
 
 

@@ -37,20 +37,11 @@ These commands also apply to `asdf local oci <version>`.
 
 ## How it works
 
-`asdf-oci` executes Oracle's official unattended installer (`install.sh`) with `--oci-cli-version <version>` so every `asdf install` matches the requested release. The CLI is installed into an internal virtual environment under the plugin's install directory, while the `oci` executable is shimmed via `asdf`.
+`asdf-oci` provisions an isolated Python virtual environment per version and installs `oci-cli==<version>` with `pip`. `asdf install` first runs the plugin's `bin/download` script, which caches the PyPI wheels for the requested release and its dependencies so that `bin/install` can complete without additional network calls. The resulting `oci` entry point is shimmed via `${ASDF_INSTALL_PATH}/bin`.
 
-### Official Quickstart parity
+### Oracle release parity
 
-Oracle documents multiple installation paths (Quickstart, updated October 2025). The key commands are:
-
-- **Oracle Linux 9** – `sudo dnf -y install oraclelinux-developer-release-el9` then `sudo dnf install python39-oci-cli`
-- **Oracle Linux 8** – `sudo dnf -y install oraclelinux-developer-release-el8` then `sudo dnf install python36-oci-cli`
-- **Oracle Linux 7** – `sudo yum install python36-oci-cli`
-- **macOS** – `brew update && brew install oci-cli`
-- **Windows** – install via the MSI or run the provided PowerShell script from GitHub
-- **Linux & UNIX** – `bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"`
-
-This plugin wraps the Linux & UNIX installer path so that `asdf` users stay aligned with Oracle's current automation while still benefiting from per-project version pinning and shims.
+Oracle distributes the CLI through the same PyPI artifacts that back the unattended `install.sh` script (Quickstart, updated October 2025). The plugin tracks those tagged releases so that Linux, macOS, and Windows developers receive the identical CLI bits that Oracle publishes, while still benefiting from per-project version pinning and shims.
 
 ### Verify the install
 

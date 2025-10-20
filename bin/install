@@ -3,54 +3,62 @@
 set -euo pipefail
 
 current_script_path="${BASH_SOURCE[0]}"
-plugin_dir="$(dirname "$(dirname "$current_script_path")")"
+plugin_dir="$(dirname "$(dirname "${current_script_path}")")"
 
 # shellcheck source=../lib/utils.bash
 source "${plugin_dir}/lib/utils.bash"
 
-install_oci() {
-	log_info "🚧  installing oci ${ASDF_INSTALL_VERSION}..."
-
-	local tmp_dir
-	tmp_dir="$(mktemp -d)"
-	cleanup() {
-		rm -rf "${tmp_dir}"
-	}
-	trap cleanup EXIT
-
-	local install_script="${tmp_dir}/install.sh"
-	curl -fsSL https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh -o "${install_script}" || \
-		log_failure_and_exit "Failed to download official OCI CLI installer script"
-
-	local install_dir="${ASDF_INSTALL_PATH}/venv"
-	local exec_dir="${ASDF_INSTALL_PATH}/bin"
-	local script_dir="${ASDF_INSTALL_PATH}/scripts"
-
-	rm -rf "${install_dir}"
-	mkdir -p "${install_dir}" "${exec_dir}" "${script_dir}"
-
-	bash "${install_script}" \
-		--oci-cli-version "${ASDF_INSTALL_VERSION}" \
-		--accept-all-defaults \
-		--no-tty \
-		--install-dir "${install_dir}" \
-		--exec-dir "${exec_dir}" \
-		--script-dir "${script_dir}"
-
-	trap - EXIT
-	cleanup
-
-	# test executable
-	test -x "${exec_dir}/oci" || log_failure_and_exit "Expected ${exec_dir}/oci to be executable."
-	log_success "oci ${ASDF_INSTALL_VERSION} installed!"
-
-}
-
 if [ "${ASDF_INSTALL_TYPE}" != "version" ]; then
-	log_failure_and_exit "Please provide the oci version number you wish to install. See \`asdf list all oci\`"
+	log_failure_and_exit "Please provide the oci version number you wish to install. See \`asdf list all oci\`."
 fi
 
-install_oci
+: "${ASDF_INSTALL_PATH:?}"
 
-# reshim now sdk components are installed
-asdf reshim "$(get_plugin_name)" "$ASDF_INSTALL_VERSION"
+check_dependencies "${plugin_dir}/lib/dependencies.txt" "failure"
+
+if ! command -v python3 >/dev/null 2>&1; then
+	log_failure_and_exit "python3 is required to install oci."
+fi
+
+tmp_install_path="$(mktemp -d)"
+cleanup() {
+	rm -rf "${tmp_install_path}"
+}
+trap cleanup EXIT
+
+log_info "🚧  installing oci ${ASDF_INSTALL_VERSION}..."
+
+install_dir="${tmp_install_path}/venv"
+exec_dir="${tmp_install_path}/bin"
+
+mkdir -p "${exec_dir}"
+
+python3 -m venv "${install_dir}"
+
+pip_bin="${install_dir}/bin/pip"
+
+"${pip_bin}" --disable-pip-version-check install --upgrade pip >/dev/null
+
+declare -a pip_args
+pip_args=(--disable-pip-version-check)
+
+if [ -n "${ASDF_DOWNLOAD_PATH:-}" ] && [ -d "${ASDF_DOWNLOAD_PATH}" ] && find "${ASDF_DOWNLOAD_PATH}" -mindepth 1 -print -quit >/dev/null 2>&1; then
+	log_info "📦  Installing from cached artifacts in ${ASDF_DOWNLOAD_PATH}."
+	pip_args+=(--no-index --find-links "${ASDF_DOWNLOAD_PATH}")
+else
+	log_info "ℹ️  Installing via PyPI; run bin/download to prefetch artifacts for offline use."
+fi
+
+pip_args+=("oci-cli==${ASDF_INSTALL_VERSION}")
+
+"${pip_bin}" install "${pip_args[@]}"
+
+ln -sf "../venv/bin/oci" "${exec_dir}/oci"
+
+mkdir -p "$(dirname "${ASDF_INSTALL_PATH}")"
+rm -rf "${ASDF_INSTALL_PATH}"
+mv "${tmp_install_path}" "${ASDF_INSTALL_PATH}"
+
+trap - EXIT
+
+log_success "oci ${ASDF_INSTALL_VERSION} installed!"
