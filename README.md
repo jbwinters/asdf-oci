@@ -2,9 +2,6 @@
 
 # asdf-oci ![Test](https://github.com/jbwinters/asdf-oci/workflows/Test/badge.svg) ![Lint](https://github.com/jbwinters/asdf-oci/workflows/Lint/badge.svg)
 
-<a href="https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/" target="_blank" rel="noopener noreferrer">
-  <img src="assets/logo_lockup_cloud_rgb.png" height="42" align="middle" />
-</a>
 
 [OCI CLI](https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/) plugin for [asdf version manager](https://asdf-vm.com) allowing you to pin `oci` versions for each project.
 
