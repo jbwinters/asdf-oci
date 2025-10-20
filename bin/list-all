@@ -9,27 +9,44 @@ plugin_dir="$(dirname "$(dirname "$current_script_path")")"
 source "${plugin_dir}/lib/utils.bash"
 
 function fetch() {
-	#curl --silent GET "https://storage.googleapis.com/storage/v1/b/${gcs_bucket_name}/o?pageToken=${1}&prefix=${gcs_object_prefix}&fields=${gcs_object_fields}"
-	local url="https://api.github.com/repos/oracle/oci-cli/releases?page=${1}"
-	#local url="https://api.github.com/repos/oracle/oci-cli/releases?page=13"${1}"
-	curl --silent GET "${url}"
+	local page="$1"
+	local url="https://api.github.com/repos/oracle/oci-cli/releases?per_page=100&page=${page}"
+	local curl_opts=(-fsSL)
+	if [ -n "${GITHUB_TOKEN:-}" ]; then
+		curl_opts+=(-H "Authorization: token ${GITHUB_TOKEN}")
+	fi
+	curl "${curl_opts[@]}" "${url}"
 }
 
 function list_all() {
-	local more=true
-	local nextPage=1
-	local list=""
-	while "${more}"; do
-		res=$(fetch "${nextPage}")
-		#echo $res # TODO handle fetch errors
-		if [[ "$(echo $res | jq)" == 0 ]]; then
-			more=false
+	local page=1
+	local versions=()
+	while :; do
+		local response
+		response="$(fetch "${page}")" || break
+
+		local error_message
+		error_message="$(echo "${response}" | jq -r 'select(type=="object" and has("message")) | .message')"
+		if [ -n "${error_message}" ]; then
+			log_failure_and_exit "GitHub API error: ${error_message}"
 		fi
-		more=false
-		list=$(echo "${res}" | jq -r '. | map(.name) | join("\n")')
-		((nextPage++))
+
+		local page_versions
+		page_versions="$(echo "${response}" | jq -r 'if type=="array" then .[] | select(.draft|not) | (.tag_name // .name // empty) else empty end')"
+		if [ -z "${page_versions}" ]; then
+			break
+		fi
+
+		while IFS= read -r version; do
+			[ -n "${version}" ] || continue
+			# normalize common tag prefix
+			versions+=("${version#v}")
+		done <<<"${page_versions}"
+
+		((page++))
 	done
-	echo -e "${list}"
+
+	printf '%s\n' "${versions[@]}"
 }
 
-list_all | sort_versions | xargs echo
+list_all | sort_versions | awk '!seen[$0]++'

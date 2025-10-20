@@ -5,6 +5,7 @@ dirname
 echo
 getconf
 grep
+jq
 mktemp
 printf
 python3

@@ -1,32 +1,20 @@
-# DANGER: This is a work in progress and does not work as-is, feel free to contribute. 
-This is a fork of asdf-gcloud and should be simple to translate.
-
 <div align="center">
 
 # asdf-oci ![Test](https://github.com/jbwinters/asdf-oci/workflows/Test/badge.svg) ![Lint](https://github.com/jbwinters/asdf-oci/workflows/Lint/badge.svg)
 
-<a href="https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.20.3/oci_cli_docs/" target="_blank" rel="noopener noreferrer">
+<a href="https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/" target="_blank" rel="noopener noreferrer">
   <img src="assets/logo_lockup_cloud_rgb.png" height="42" align="middle" />
 </a>
 
-[OCI CLI](https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.20.3/oci_cli_docs/) plugin for [asdf version manager](https://asdf-vm.com) allowing you to pin `oci` versions for each GCP project.
+[OCI CLI](https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/) plugin for [asdf version manager](https://asdf-vm.com) allowing you to pin `oci` versions for each project.
 
 ![asdf-oci](./assets/asdf-oci.png)
 
 </div>
 
-# Contents
-
-- [Dependencies](#dependencies)
-- [Install](#install)
-- [Why?](#why)
-- [Default Cloud SDK Components](#default-cloud-sdk-components)
-- [Contributing](#contributing)
-- [License](#license)
-
 # Dependencies
 
-Are tracked in [lib/dependencies.txt](lib/dependencies.txt) and checked on installation of plugin and `asdf install oci *`. The core dependencies are: `bash`, `curl`, `python`, `sort`, `tar`.
+Are tracked in [lib/dependencies.txt](lib/dependencies.txt) and checked on installation of the plugin and `asdf install oci *`. Core dependencies include `bash`, `curl`, `jq`, `python3`, `sort`, and `tar`.
 
 # Install
 
@@ -50,13 +38,46 @@ asdf global oci latest
 
 These commands also apply to `asdf local oci <version>`.
 
+## How it works
+
+`asdf-oci` executes Oracle's official unattended installer (`install.sh`) with `--oci-cli-version <version>` so every `asdf install` matches the requested release. The CLI is installed into an internal virtual environment under the plugin's install directory, while the `oci` executable is shimmed via `asdf`.
+
+### Official Quickstart parity
+
+Oracle documents multiple installation paths (Quickstart, updated October 2025). The key commands are:
+
+- **Oracle Linux 9** – `sudo dnf -y install oraclelinux-developer-release-el9` then `sudo dnf install python39-oci-cli`
+- **Oracle Linux 8** – `sudo dnf -y install oraclelinux-developer-release-el8` then `sudo dnf install python36-oci-cli`
+- **Oracle Linux 7** – `sudo yum install python36-oci-cli`
+- **macOS** – `brew update && brew install oci-cli`
+- **Windows** – install via the MSI or run the provided PowerShell script from GitHub
+- **Linux & UNIX** – `bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"`
+
+This plugin wraps the Linux & UNIX installer path so that `asdf` users stay aligned with Oracle's current automation while still benefiting from per-project version pinning and shims.
+
+### Verify the install
+
+After `asdf install`, confirm the version matches expectations:
+
+```shell
+asdf exec oci --version
+```
+
+### First-time configuration
+
+Run the guided setup when you need a profile:
+
+```shell
+asdf exec oci setup config
+```
+
+The wizard prompts for tenancy OCID, user OCID, region, and creates API keys. Configuration is stored at `~/.oci/config` by default and is not removed when uninstalling a tool version.
+
 # Why?
 
 The asdf config file, `.tool-versions`, allows pinning each tool in your project to a specific version. This ensures that ALL developers are using the same version of each tool. Same `python`, same `oci`, same `terraform` etc.
 
 When you update a version in `.tool-versions`, `asdf` will prompt all users who do not have the correct versions to upgrade. This enables whole teams to update their tools in unison.
-
-# FAQ
 
 # Contributing
 

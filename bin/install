@@ -9,12 +9,39 @@ plugin_dir="$(dirname "$(dirname "$current_script_path")")"
 source "${plugin_dir}/lib/utils.bash"
 
 install_oci() {
-	log_info "🚧  installing..."
-	bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" --install-dir "${ASDF_INSTALL_PATH}"
-	# TODO optional features
+	log_info "🚧  installing oci ${ASDF_INSTALL_VERSION}..."
+
+	local tmp_dir
+	tmp_dir="$(mktemp -d)"
+	cleanup() {
+		rm -rf "${tmp_dir}"
+	}
+	trap cleanup EXIT
+
+	local install_script="${tmp_dir}/install.sh"
+	curl -fsSL https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh -o "${install_script}" || \
+		log_failure_and_exit "Failed to download official OCI CLI installer script"
+
+	local install_dir="${ASDF_INSTALL_PATH}/venv"
+	local exec_dir="${ASDF_INSTALL_PATH}/bin"
+	local script_dir="${ASDF_INSTALL_PATH}/scripts"
+
+	rm -rf "${install_dir}"
+	mkdir -p "${install_dir}" "${exec_dir}" "${script_dir}"
+
+	bash "${install_script}" \
+		--oci-cli-version "${ASDF_INSTALL_VERSION}" \
+		--accept-all-defaults \
+		--no-tty \
+		--install-dir "${install_dir}" \
+		--exec-dir "${exec_dir}" \
+		--script-dir "${script_dir}"
+
+	trap - EXIT
+	cleanup
 
 	# test executable
-	test -x "${ASDF_INSTALL_PATH}/bin/oci" || log_failure_and_exit "Expected ${ASDF_INSTALL_PATH}/bin/oci to be executable."
+	test -x "${exec_dir}/oci" || log_failure_and_exit "Expected ${exec_dir}/oci to be executable."
 	log_success "oci ${ASDF_INSTALL_VERSION} installed!"
 
 }

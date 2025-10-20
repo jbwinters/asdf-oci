@@ -8,8 +8,8 @@ plugin_dir="$(dirname "$(dirname "$current_script_path")")"
 # shellcheck source=../lib/utils.bash
 source "${plugin_dir}/lib/utils.bash"
 
-# Google Cloud SDK uninstall instructions - https://cloud.google.com/sdk/docs/uninstall-cloud-sdk
+# OCI CLI uninstall references - https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/oci-cli-installation.html
 
-log_info "ℹ️  Your gcloud project configuration(s) persist in you gcloud configuration directory at \"$(default_oci_sdk_config)\""
+log_info "ℹ️  Your OCI CLI configuration file is left untouched at \"$(default_oci_sdk_config)\""
 
 rm -rf "${ASDF_INSTALL_PATH}"
