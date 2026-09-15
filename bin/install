@@ -20,24 +20,23 @@ if ! command -v python3 >/dev/null 2>&1; then
 	log_failure_and_exit "python3 is required to install oci."
 fi
 
-tmp_install_path="$(mktemp -d)"
+# Virtual environment scripts contain absolute paths, so do not relocate the venv.
+mkdir -p "${ASDF_INSTALL_PATH}"
 cleanup() {
-	rm -rf "${tmp_install_path}"
+	rm -rf "${ASDF_INSTALL_PATH}"
 }
 trap cleanup EXIT
 
 log_info "🚧  installing oci ${ASDF_INSTALL_VERSION}..."
 
-install_dir="${tmp_install_path}/venv"
-exec_dir="${tmp_install_path}/bin"
+install_dir="${ASDF_INSTALL_PATH}/venv"
+exec_dir="${ASDF_INSTALL_PATH}/bin"
 
 mkdir -p "${exec_dir}"
 
 python3 -m venv "${install_dir}"
 
 pip_bin="${install_dir}/bin/pip"
-
-"${pip_bin}" --disable-pip-version-check install --upgrade pip >/dev/null
 
 declare -a pip_args
 pip_args=(--disable-pip-version-check)
@@ -46,6 +45,7 @@ if [ -n "${ASDF_DOWNLOAD_PATH:-}" ] && [ -d "${ASDF_DOWNLOAD_PATH}" ] && find "$
 	log_info "📦  Installing from cached artifacts in ${ASDF_DOWNLOAD_PATH}."
 	pip_args+=(--no-index --find-links "${ASDF_DOWNLOAD_PATH}")
 else
+	"${pip_bin}" --disable-pip-version-check install --upgrade pip >/dev/null
 	log_info "ℹ️  Installing via PyPI; run bin/download to prefetch artifacts for offline use."
 fi
 
@@ -54,10 +54,6 @@ pip_args+=("oci-cli==${ASDF_INSTALL_VERSION}")
 "${pip_bin}" install "${pip_args[@]}"
 
 ln -sf "../venv/bin/oci" "${exec_dir}/oci"
-
-mkdir -p "$(dirname "${ASDF_INSTALL_PATH}")"
-rm -rf "${ASDF_INSTALL_PATH}"
-mv "${tmp_install_path}" "${ASDF_INSTALL_PATH}"
 
 trap - EXIT
 

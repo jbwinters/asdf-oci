@@ -37,7 +37,9 @@ These commands also apply to `asdf local oci <version>`.
 
 ## How it works
 
-`asdf-oci` provisions an isolated Python virtual environment per version and installs `oci-cli==<version>` with `pip`. `asdf install` first runs the plugin's `bin/download` script, which caches the PyPI wheels for the requested release and its dependencies so that `bin/install` can complete without additional network calls. The resulting `oci` entry point is shimmed via `${ASDF_INSTALL_PATH}/bin`.
+`asdf-oci` provisions an isolated Python virtual environment per version and installs `oci-cli==<version>` with `pip`. `asdf install` first runs the plugin's `bin/download` script, which downloads or builds wheels for the requested release and all its dependencies. Source distributions are built during this step, while their build dependencies can still be downloaded, so that `bin/install` can complete from the cached wheels without additional network calls. Building wheels may require a compiler and development headers when a dependency has no wheel for your Python version or platform.
+
+The virtual environment is created at its final location, `${ASDF_INSTALL_PATH}/venv`, so its executable scripts retain valid interpreter paths. The resulting `oci` entry point is shimmed via `${ASDF_INSTALL_PATH}/bin`.
 
 ### Oracle release parity
 

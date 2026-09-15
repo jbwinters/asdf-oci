@@ -26,11 +26,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
-log_info "📦  Downloading oci ${ASDF_INSTALL_VERSION} artifacts..."
+log_info "📦  Preparing oci ${ASDF_INSTALL_VERSION} wheels..."
 
-python3 -m pip download \
+# Build source distributions while their build dependencies are available online.
+python3 -m pip wheel \
 	--disable-pip-version-check \
-	--dest "${tmp_dir}" \
+	--wheel-dir "${tmp_dir}" \
 	"oci-cli==${ASDF_INSTALL_VERSION}" >/dev/null
 
 : "${ASDF_DOWNLOAD_PATH:?}"

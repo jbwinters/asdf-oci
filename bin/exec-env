@@ -14,4 +14,3 @@ source "${plugin_dir}/lib/utils.bash"
 if [[ ! -x "$(command -v python)" ]]; then
 	log_failure_and_exit "Python not found and is required for oci. Might I suggest https://github.com/danhper/asdf-python"
 fi
-
